@@ -1,16 +1,17 @@
 import farmdata as fd
 import bwmodel as bwm
+from utils import IOData, StudyData
 
 import matplotlib.pyplot as plt
 import numpy as np
-import random
-import math
+#import random
+#import math
 #from scipy import stats
 
-readFile = '../data/2020-06-12_Standard_Ejby_Jersey.csv'
-#readFile = '../data/2020-06-11_Standard_Nyborg_Jersey.csv'
-#readFile = '../data/2020-06-12_Standard_Glamsbjerg.csv'
-#readFile = '../data/2020-06-15_Standard_Skjern.csv'
+#readFile = '../../../data/2020-06-12_Standard_Ejby_Jersey.csv'
+#readFile = '../../../data/2020-06-11_Standard_Nyborg_Jersey.csv'
+readFile = '../../../data/2020-06-12_Standard_Glamsbjerg.csv'
+#readFile = '../../../data/2020-06-15_Standard_Skjern.csv'
 delim = ';'
 
 # Instantiating an FarmData class object
@@ -53,52 +54,11 @@ print(f'\tlen idata without outliers: {len(idata2)}')
 
 checkoutliers_all = False
 checkoutliers_ind = False
-
+# check the quality of outlier detection
 if checkoutliers_all:
-    # collect all observed body weights over time
-    # and plot them to see possible data clustering
-    # and the amount of otliers
-    #
-    # 1) collect data before outlier removal
-    all_weights = []
-    all_times = []
-    for i in d.u_id:
-        tmp = idata[i]
-        tmp2 = tmp[:,1]
-        tmp3 = tmp[:,0]
-        all_weights = all_weights + tmp2.tolist()
-        all_times = all_times + tmp3.tolist()
-
-    plt.scatter( all_times[0:], all_weights[0:] )
-
-    # 2) collect data after outlier removal
-    all_weights = []
-    all_times = []
-    for i in d.u_id:
-        tmp = idata2[i]
-        tmp2 = tmp[:,1]
-        tmp3 = tmp[:,0]
-        all_weights = all_weights + tmp2.tolist()
-        all_times = all_times + tmp3.tolist()
-
-    plt.scatter( all_times[0:], all_weights[0:] )
-
-    # 3) show all data (in diff. colors) in the same plot window
-    plt.show()
-
-    if checkoutliers_ind:
-        # check for every individual
-        # checking a quality of outlier detection
-        for i in d.u_id:
-            tmp0 = idata[i]
-            tmp02 = tmp0[:,1]
-            tmp03 = tmp0[:,0]
-            tmp2 = idata2[i]
-            tmp22 = tmp2[:,1]
-            tmp23 = tmp2[:,0]
-            plt.scatter( tmp03[0:], tmp02[0:] )
-            plt.scatter( tmp23[0:], tmp22[0:] )
-            plt.show()
+    prdat = IOData()
+    prdat.compare_outlier(d.u_id, idata, idata2, checkoutliers_ind)
+    del prdat
 
 # impute missing feature (conur data)
 d.impute(idata2)
@@ -106,24 +66,12 @@ d.impute(idata2)
 # print out some data to files
 dataprint = False
 if dataprint:
-    sz1 = 80 # training dataset, %
-    sz2 = 20 # validation dataset, %
-    f1 = open("training.dat", "a")
-    f2 = open("validation.dat", "a")
-    for i in range(1, int( len(d.u_id) )):
-        num = random.randint(1, 100)
-        if num > sz2:
-            np.savetxt(f1, idata2[ d.u_id[i] ][:,1:] )
-            f1.write("\n")
-        else:
-            np.savetxt(f2, idata2[ d.u_id[i] ][:,1:] )
-            f2.write("\n")
-    f1.close()
-    f2.close()
+    prdat = IOData()
+    prdat.fwrite(idata2, d.u_id, 80, "training.dat", "validation.dat")
+    del prdat
 
 # check imputed data
 checkimpute = False
-
 if checkimpute:
     num = 4
     for i_range in range(0,len( idata2[ d.u_id[num] ][:,0] )):
@@ -131,34 +79,15 @@ if checkimpute:
         plt.show()
 
 
-# Creating models using the class BWModel:
-#
 # prepare training and validation data sets: target and features
-sz1 = 80 # training dataset, %
-sz2 = 20 # validation dataset, %
-trWeights = []
-trFeatures = []
-vlWeights = []
-vlFeatures = []
-for i in range(1, int( len(d.u_id) )):
-    num = random.randint(1, 100)
-    timeDataLength = len(idata2[ d.u_id[i] ][:,1])
-    if timeDataLength >= 10:
-        range = math.floor(0.8 * timeDataLength)
-        if num > sz2:
-            #print(f'\tlenth of idata2[ d.u_id[i] ][:,1] = {len(idata2[ d.u_id[i] ][:,1])}')
-            tmp2 = idata2[ d.u_id[i] ][0:range-1,1]
-            tmp3 = idata2[ d.u_id[i] ][0:range-1,2:]
-            trWeights = trWeights + tmp2.tolist()
-            trFeatures = trFeatures + tmp3.tolist()
-        else:
-            tmp2 = idata2[ d.u_id[i] ][range:,1]
-            tmp3 = idata2[ d.u_id[i] ][range:,2:]
-            vlWeights = vlWeights + tmp2.tolist()
-            vlFeatures = vlFeatures + tmp3.tolist()
+sdat = StudyData(d.u_id, idata2, 80, 'ts')
+
+trWeights, trFeatures, vlWeights, vlFeatures = sdat.get()
 
 # free memory
 d.clear()
+
+# Creating models using the class BWModel:
 
 # create an object of the class
 m1 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'LR')
