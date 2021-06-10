@@ -86,20 +86,32 @@ trWeights, trFeatures, vlWeights, vlFeatures = sdat.get()
 
 # free memory
 d.clear()
+del d
 
 # Creating models using the class BWModel:
 
 # create an object of the class
-m1 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'LR')
+m1 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'lr')
+m2 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'rr')
 
 m1.fit()
-pdWeights = m1.pred()
+m2.fit()
 
-print(np.corrcoef(vlWeights, pdWeights))
+pdWeights1 = m1.pred()
+pdWeights2 = m2.pred()
 
-plt.scatter( vlWeights, pdWeights )
+# Results:
+
+print(np.corrcoef(vlWeights, pdWeights1))
+print(np.corrcoef(vlWeights, pdWeights2))
+
+fig, axs = plt.subplots(2)
+axs[0].scatter( vlWeights, pdWeights1 )
+axs[1].scatter( vlWeights, pdWeights2 )
 plt.show()
 
+del m1
+del m2
 
 
  
