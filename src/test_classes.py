@@ -4,14 +4,11 @@ from utils import IOData, StudyData
 
 import matplotlib.pyplot as plt
 import numpy as np
-#import random
-#import math
-#from scipy import stats
 
-#readFile = '../../../data/2020-06-12_Standard_Ejby_Jersey.csv'
-#readFile = '../../../data/2020-06-11_Standard_Nyborg_Jersey.csv'
-readFile = '../../../data/2020-06-12_Standard_Glamsbjerg.csv'
-#readFile = '../../../data/2020-06-15_Standard_Skjern.csv'
+#readFile = '../../data/2020-06-12_Standard_Ejby_Jersey.csv'
+#readFile = '../../data/2020-06-11_Standard_Nyborg_Jersey.csv'
+readFile = '../../data/2020-06-12_Standard_Glamsbjerg.csv'
+#readFile = '../../data/2020-06-15_Standard_Skjern.csv'
 delim = ';'
 
 # Instantiating an FarmData class object
@@ -90,29 +87,31 @@ del d
 
 # Creating models using the class BWModel:
 
-# create an object of the class
-m1 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'lr')
-m2 = bwm.BWModel(trWeights, trFeatures, vlFeatures, 'rr')
+# 1. 'lr': linear regression
+# 2. 'rr': ridge regression, alpha = 0.5 (default)
+# 3. 'la': lasso regression, alpha = 0.5 (default)
+# 4. 'dt': decission tree regressor, random_state = 0 (default)
+# 5. 'rf': random forest regressor, random_state = 0 (default)
+# 6. 'ab': ada boost regressor, random_state = 0 (default)
+# 7. 'sv': support vector regressor, C = 100 (default)
 
-m1.fit()
-m2.fit()
+methods = ['lr', 'rr', 'la', 'dt', 'rf', 'ab', 'sv']
+fig, axs = plt.subplots( len(methods) )
+corr = []
 
-pdWeights1 = m1.pred()
-pdWeights2 = m2.pred()
+for i in range(0, len(methods)):
+    
+    print(methods[i])
 
-# Results:
+    m = bwm.BWModel(trWeights, trFeatures, vlFeatures, methods[i])
+    m.fit()
+    pdWeights = m.pred()
+    a = np.corrcoef(vlWeights, pdWeights)
+    corr.append(a[0,1])
+    axs[i].scatter( vlWeights, pdWeights )
+    #axs[i].title.set_text( methods[i] + ", corr = " + str(a[0,1]) )
+    del m
 
-print(np.corrcoef(vlWeights, pdWeights1))
-print(np.corrcoef(vlWeights, pdWeights2))
-
-fig, axs = plt.subplots(2)
-axs[0].scatter( vlWeights, pdWeights1 )
-axs[1].scatter( vlWeights, pdWeights2 )
+print(corr)
+#plt.tight_layout()
 plt.show()
-
-del m1
-del m2
-
-
- 
-
