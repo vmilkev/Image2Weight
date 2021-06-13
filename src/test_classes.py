@@ -1,5 +1,6 @@
 import farmdata as fd
-import bwmodel as bwm
+#import bwmodel as bwm
+from bwmodel import BWModel
 from utils import IOData, StudyData
 
 import matplotlib.pyplot as plt
@@ -93,7 +94,7 @@ del d
 # 4. 'dt': decission tree regressor, random_state = 0 (default)
 # 5. 'rf': random forest regressor, random_state = 0 (default)
 # 6. 'ab': ada boost regressor, random_state = 0 (default)
-# 7. 'sv': support vector regressor, C = 100 (default)
+# 7. 'sv': support vector regressor, C = 10 (default)
 
 methods = ['lr', 'rr', 'la', 'dt', 'rf', 'ab', 'sv']
 fig, axs = plt.subplots( len(methods) )
@@ -103,9 +104,14 @@ for i in range(0, len(methods)):
     
     print(methods[i])
 
-    m = bwm.BWModel(trWeights, trFeatures, vlFeatures, methods[i])
-    m.fit()
-    pdWeights = m.pred()
+    m = BWModel()
+    m.fit(trWeights, trFeatures, methods[i])
+    pdWeights = m.pred( vlFeatures )
+
+    # other mode:
+    # ftmodel = m.fit(trWeights, trFeatures, methods[i])
+    # pdWeights = ftmodel.predict( vlFeatures )
+
     a = np.corrcoef(vlWeights, pdWeights)
     corr.append(a[0,1])
     axs[i].scatter( vlWeights, pdWeights )
