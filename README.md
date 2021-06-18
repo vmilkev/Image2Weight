@@ -1,2 +1,2 @@
 # Image2Weight
-Data pipeline for continuous prediction of body conditions (body weight, feed intake etc.) from (2D/3D) image data.
+Collection of classes intended to data pipeline development for continuous prediction of animal's body conditions (body weight, feed intake etc.) from (2D/3D) image data.
