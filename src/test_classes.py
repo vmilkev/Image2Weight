@@ -8,8 +8,8 @@ import numpy as np
 
 #readFile = '../../data/2020-06-12_Standard_Ejby_Jersey.csv'
 #readFile = '../../data/2020-06-11_Standard_Nyborg_Jersey.csv'
-readFile = '../../data/2020-06-12_Standard_Glamsbjerg.csv'
-#readFile = '../../data/2020-06-15_Standard_Skjern.csv'
+#readFile = '../../data/2020-06-12_Standard_Glamsbjerg.csv'
+readFile = '../../data/2020-06-15_Standard_Skjern.csv'
 delim = ';'
 
 # Instantiating an FarmData class object
@@ -78,9 +78,19 @@ if checkimpute:
 
 
 # prepare training and validation data sets: target and features
-sdat = StudyData(d.u_id, idata2, 80, 'ts')
+#sdat = StudyData(d.u_id, idata2, 80, 'ts')
+#sdat = StudyData(d.u_id, idata2, 80, 'ra')
+sdat = StudyData(d.u_id, idata2, 80, 'di')
 
 trWeights, trFeatures, vlWeights, vlFeatures = sdat.get()
+
+# print(trWeights)
+# print(type(trWeights))
+# print(len(trWeights))
+# #print(len(trWeights[0]))
+# print(trFeatures)
+
+# raise SystemExit
 
 # free memory
 d.clear()

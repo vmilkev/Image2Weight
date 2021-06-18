@@ -3,6 +3,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+#import debugpy
+
 class StudyData:
     # collection of methods to produce Training and Validation Data sets
 
@@ -17,11 +19,20 @@ class StudyData:
     def get(self):
         if self.meth == 'ts':
             return self.__ts()
+        elif self.meth == 'ra':
+            return self.__ra()
+        elif self.meth == 'di':
+            return self.__di()
         else:
             return
     
     def __ts(self):
+        # 'ts' - means time series;
         # prepare training and validation data sets: target and features
+        # here we use first 80 % of recorded data from each randomly selected
+        # datasets to training dataset;
+        # last 20 % of recorded data from randomly selected datasets used as validation dataset;
+        # there is no overlaping between training and validation data sets.   
 
         sz1 = self.trpart        # training dataset, %
         sz2 = 100 - self.trpart  # validation dataset, %
@@ -49,6 +60,125 @@ class StudyData:
         
         return trTarget, trFeatures, vlTarget, vlFeatures;
 
+    def __ra(self):
+        # 'ra' - means random;
+        # prepare training and validation data sets: target and features
+        # here we randomly separate all data on two non overlaping sets        
+        # we use 80 % of all recorded data from each randomly selected
+        # datasets to training dataset;
+        # we use 20 % of all recorded data from randomly selected datasets used as validation dataset;
+        # there is no overlaping between training and validation data sets.   
+
+        sz1 = self.trpart        # training dataset, %
+        sz2 = 100 - self.trpart  # validation dataset, %
+        tsData = 0.8             # part of time series data used fro training
+        trTarget = []
+        trFeatures = []
+        vlTarget = []
+        vlFeatures = []
+        for i in range(1, int( len(self.u_id) )):
+            num = random.randint(1, 100)
+            timeDataLength = len(self.data[ self.u_id[i] ][:,1])
+            if timeDataLength >= 10:
+                #trrange = math.floor(tsData * timeDataLength)
+                if num > sz2:
+                    #print(f'\tlenth of self.data[ self.u_id[i] ][:,1] = {len(self.data[ self.u_id[i] ][:,1])}')
+                    tmp2 = self.data[ self.u_id[i] ][:,1]
+                    tmp3 = self.data[ self.u_id[i] ][:,2:]
+                    trTarget = trTarget + tmp2.tolist()
+                    trFeatures = trFeatures + tmp3.tolist()
+                    #print(type(tmp2))
+                else:
+                    tmp2 = self.data[ self.u_id[i] ][:,1]
+                    tmp3 = self.data[ self.u_id[i] ][:,2:]
+                    vlTarget = vlTarget + tmp2.tolist()
+                    vlFeatures = vlFeatures + tmp3.tolist()
+        
+        return trTarget, trFeatures, vlTarget, vlFeatures;
+
+    def __di(self):
+        # 'di' - means conturs differences;
+        # prepare training and validation data sets: target and features
+        # there is no overlaping between training and validation data sets.   
+
+        sz1 = self.trpart        # training dataset, %
+        sz2 = 100 - self.trpart  # validation dataset, %
+        tsData = 0.8             # part of time series data used fro training
+        trTarget = []
+        trFeatures = []
+        vlTarget = []
+        vlFeatures = []
+        for i in range(1, int( len(self.u_id) )):
+            num = random.randint(1, 100)
+            timeDataLength = len(self.data[ self.u_id[i] ][:,1])
+            if timeDataLength >= 10:
+                if num > sz2:
+                    # print(f'\tlenth of self.data[ self.u_id[i] ][:,1] = {len(self.data[ self.u_id[i] ][:,1])}')
+                    # tmp2 = self.data[ self.u_id[i] ][:,1]
+                    # tmp3 = self.data[ self.u_id[i] ][:,2:]
+
+                    ( tmp2, tmp3 ) = self.__get_diff( self.data[ self.u_id[i] ][:,1], self.data[ self.u_id[i] ][:,2:] )
+
+                    trTarget = trTarget + tmp2.tolist()
+                    trFeatures = trFeatures + tmp3.tolist()
+                    #print(type(tmp2))
+                else:
+                    # tmp2 = self.data[ self.u_id[i] ][:,1]
+                    # tmp3 = self.data[ self.u_id[i] ][:,2:]
+                    ( tmp2, tmp3 ) = self.__get_diff( self.data[ self.u_id[i] ][:,1], self.data[ self.u_id[i] ][:,2:] )
+
+                    vlTarget = vlTarget + tmp2.tolist()
+                    vlFeatures = vlFeatures + tmp3.tolist()
+        
+        return trTarget, trFeatures, vlTarget, vlFeatures;
+
+    def __get_diff( self, intarget, inconturs ):
+        
+        groups = 4
+        (record, cols) = self.__get_rc( inconturs )
+        lContur = math.floor(cols/groups)
+
+        area = np.empty([record, groups], float)
+
+        for j in range(0,record):
+            range1 = 0
+            range2 = lContur-1
+
+            for i in range(0,groups):
+                # print(i)
+                # if i == 3:
+                #     print(np.sum( inconturs[j,range1:range2] ) < 1.0)
+                #     print(np.sum( inconturs[j,range1:range2] ))
+                #     print(( inconturs[j,range1:range2] ))
+
+                area[j,i] = np.sum( inconturs[j,range1:range2] )
+            
+                range1 = range1 + lContur
+                range2 = range2 + lContur
+
+        #print(area)
+
+        diff_target = np.empty([record-1], float)
+        diff_features = np.empty([record-1, groups], float)
+
+        for i in range(0,record-1):
+            diff_target[i] = intarget[i] - intarget[i+1]
+            for j in range(0,groups):
+                diff_features[i,j] = area[i,j] - area[i+1,j]          
+
+        return (diff_target, diff_features)
+
+    def __get_rc( self, darray ):
+        if len(darray.shape) > 1:
+            rows = darray.shape[0]
+            cols = darray.shape[1]
+        else:
+            rows = darray.shape[0]
+            cols = 0
+        return (rows, cols)
+
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------
 
 class IOData:
     # some in/out interfaces
